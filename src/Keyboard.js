@@ -13,6 +13,19 @@ import ShiftIcon from './icons/ShiftIcon';
 
 const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
 
+// https://github.com/facebook/react/issues/10135
+function setNativeValue(element, value) {
+  const valueSetter = Object.getOwnPropertyDescriptor(element, 'value').set;
+  const prototype = Object.getPrototypeOf(element);
+  const prototypeValueSetter = Object.getOwnPropertyDescriptor(prototype, 'value').set;
+  
+  if (valueSetter && valueSetter !== prototypeValueSetter) {
+  	prototypeValueSetter.call(element, value);
+  } else {
+    valueSetter.call(element, value);
+  }
+}
+
 export default class Keyboard extends PureComponent {
 	static propTypes = {
 		leftButtons: PropTypes.arrayOf(PropTypes.node),
@@ -67,7 +80,8 @@ export default class Keyboard extends PureComponent {
 		const {value, selectionStart, selectionEnd} = inputNode;
 		const nextValue = value.substring(0, selectionStart) + key + value.substring(selectionEnd);
 
-		inputNode.value = nextValue;
+		setNativeValue(inputNode, nextValue);
+
 		if (this.props.onClick) {
 			this.props.onClick(nextValue);
 		}
@@ -93,7 +107,7 @@ export default class Keyboard extends PureComponent {
 		}
 		nextSelectionPosition = (nextSelectionPosition > 0) ? nextSelectionPosition : 0;
 
-		inputNode.value = nextValue;
+		setNativeValue(inputNode, nextValue);
 		if (this.props.onClick) {
 			this.props.onClick(nextValue);
 		}
